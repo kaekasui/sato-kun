@@ -22,7 +22,7 @@ module.exports = (robot) ->
           msg.send 'PR作成した！マージよろしく！'
           msg.send update_response.html_url
 
-  updatePrSummary = (url, msg) ->
+  updatePullRequest = (url, msg) ->
     github.get url, (response) ->
       commits_url = "#{response.commits_url}?per_page=100"
       github.get commits_url, (commits) ->
@@ -60,13 +60,15 @@ module.exports = (robot) ->
           if response.length > 0
             msg.send "もうある、更新しとく。"
             pull_url = "#{url_api_base}/repos/#{org_name}/#{repo}/pulls/#{response[0].number}"
-            updatePrSummary(pull_url, msg)
+            # プルリクエストを更新
+            updatePullRequest(pull_url, msg)
           else
-            msg.send 'PR作成中・・・'
+            msg.send 'PR作成する・・・'
+            # プルリクエストを作成
             createPullRequest(pulls_url, params, msg)
 
         github.handleErrors (response) ->
           if response.body.indexOf("No commits") > -1
-            msg.send '差分ないし、特に作る必要なさそう・・・（仕事しろ'
+            msg.send 'あれ？差分ないし、特に作る必要なさそう・・・（仕事しろ'
       else
         msg.send "#{repo}なんてないけど・・・"

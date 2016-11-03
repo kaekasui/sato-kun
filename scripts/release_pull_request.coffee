@@ -15,7 +15,7 @@ module.exports = (robot) ->
         for commit in commits
           unless commit.commit.message.match(/Merge pull request/)
             continue
-          pr_body += "- [ ] #{commit.commit.message.replace(/\n\n/g, ' ').replace(/Merge pull request /, '').replace(new RegExp("from #{org_name}\/[A-Za-z0-9_-]*"), '')}\n"
+          pr_body += "- #{commit.commit.message.replace(/\n\n/g, ' ').replace(/Merge pull request /, '').replace(new RegExp("from #{org_name}\/[A-Za-z0-9_-]*"), '')}\n"
 
         update_data = { body: pr_body }
         github.patch response.url, update_data, (update_response) ->
@@ -30,7 +30,7 @@ module.exports = (robot) ->
         for commit in commits
           unless commit.commit.message.match(/Merge pull request/)
             continue
-          pr_body += "- [ ] #{commit.commit.message.replace(/\n\n/g, ' ').replace(/Merge pull request /, '').replace(new RegExp("from #{org_name}\/[A-Za-z0-9_-]*"), '')}\n"
+          pr_body += "- #{commit.commit.message.replace(/\n\n/g, ' ').replace(/Merge pull request /, '').replace(new RegExp("from #{org_name}\/[A-Za-z0-9_-]*"), '')}\n"
 
         update_data = { body: pr_body }
         github.patch response.url, update_data, (update_response) ->

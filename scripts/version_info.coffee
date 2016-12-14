@@ -22,9 +22,17 @@ module.exports = (robot) ->
 
         github.get ruby_url, {}, (res) ->
           content = b64decode(res.content)
-          ruby_version = content.match(/ruby \'(\d*|\.)*\'/)[0]
-          rails_version = content.match(/gem \'rails\', \'(\d*|\.)*\'/)[0].replace(/gem \'rails\', /, 'rails ')
 
+          ruby_match = content.match(/ruby \'(\d*|\.)*\'/)
+          if ruby_match != null
+            ruby_version = ruby_match[0]
+
+          rails_match = content.match(/gem \'rails\', \'(\d*|\.)*\'/)
+          if rails_match != null
+            rails_version = rails_match[0].replace(/gem \'rails\', /, 'rails ')
+
+          if ruby_version == undefined && rails_version == undefined
+            msg.send '設定されてないぽい'
           msg.send "```\n#{ruby_version}\n#{rails_version}\n```"
       else
         msg.send "#{repo}なんてないけど・・・"

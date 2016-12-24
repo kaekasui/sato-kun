@@ -18,9 +18,9 @@ module.exports = (robot) ->
       if repos.includes(repo)
         msg.send "#{repo}でいいよね？"
 
-        ruby_url = "#{url_api_base}/repos/#{org_name}/#{repo}/contents/Gemfile"
+        file = "#{url_api_base}/repos/#{org_name}/#{repo}/contents/Gemfile"
 
-        github.get ruby_url, {}, (res) ->
+        github.get file, {}, (res) ->
           content = b64decode(res.content)
 
           ruby_match = content.match(/ruby \'(\d*|\.)*\'/)

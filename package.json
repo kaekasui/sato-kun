@@ -26,7 +26,7 @@
   "devDependencies": {
     "githubot": "^1.0.1",
     "hubot-github": "^0.2.0",
-    "hubot-slack": "^4.2.1",
+    "hubot-slack": "^4.2.2",
     "underscore": "^1.8.3"
   }
 }

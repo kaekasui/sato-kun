@@ -17,7 +17,7 @@ module.exports = (robot) ->
 
     ## 前回会話してからの経過時間調べる
     KEY_DOCOMO_CONTEXT_TTL = 'docomo-talk-context-ttl'
-    TTL_MINUTES = 20
+    TTL_MINUTES = 5
     old_msec = robot.brain.get KEY_DOCOMO_CONTEXT_TTL
     diff_minutes = getTimeDiffAsMinutes old_msec
 

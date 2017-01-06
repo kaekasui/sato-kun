@@ -9,7 +9,7 @@ module.exports = (robot) ->
     week_day = 1
 
   cronjob = new cronJob(
-    cronTime: "0 0 9 " + day +" * " + week_day
+    cronTime: "0 0 9 #{day} * #{week_day}"
     start: true
     timeZone: "Asia/Tokyo"
     onTick: ->

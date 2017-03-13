@@ -8,7 +8,8 @@ module.exports = (robot) ->
     day = if week_day == 0 then 2 else 3
     week_day = 1
 
-  cronjob = new cronJob(
+  # 月初
+  new cronJob(
     cronTime: "0 0 9 " + day + " * " + week_day
     start: true
     timeZone: "Asia/Tokyo"

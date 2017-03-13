@@ -5,7 +5,7 @@ module.exports = (robot) ->
   week_day = date.getDay()
   day = 1
   if [0, 6].includes(week_day)
-    day = (week_day == 0) ? 2 : 3
+    day = if week_day == 0 then 2 else 3
     week_day = 1
 
   cronjob = new cronJob(

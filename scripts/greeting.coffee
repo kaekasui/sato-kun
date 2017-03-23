@@ -11,7 +11,6 @@ module.exports = (robot) ->
 
   now_utc = new Date()
   now_jst = now_utc.toLocaleString()
-  hour = now.toLocaleString().getHours()
 
   new cronJob(
     cronTime: "0 0 12,18,22 * * *"

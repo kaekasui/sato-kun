@@ -1,16 +1,9 @@
 cronJob = require('cron').CronJob
 
 module.exports = (robot) ->
-  date = new Date()
-  week_day = date.getDay()
-  day = 1
-  if [0, 6].includes(week_day)
-    day = if week_day == 0 then 2 else 3
-    week_day = 1
-
   # 月初
   new cronJob(
-    cronTime: "0 0 9 " + day + " * " + week_day
+    cronTime: "0 0 9 1 * *"
     start: true
     timeZone: "Asia/Tokyo"
     onTick: ->

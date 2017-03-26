@@ -14,5 +14,7 @@ module.exports = (robot) ->
     start: true
     timeZone: "Asia/Tokyo"
     onTick: ->
-      robot.send { room: "#reminder" }, "時間ですよー"
+      now_utc = new Date()
+      now_jst = now_utc.toLocaleTimeString()
+      robot.send { room: "#reminder" }, now_jst + " ですよー"
   )

@@ -10,11 +10,9 @@ module.exports = (robot) ->
   )
 
   new cronJob(
-    cronTime: "0 0 12,18,22 * * *"
+    cronTime: "0 0 22 * * *"
     start: true
     timeZone: "Asia/Tokyo"
     onTick: ->
-      now_utc = new Date()
-      now_jst = now_utc.toLocaleTimeString()
-      robot.send { room: "#reminder" }, now_jst + " ですよー"
+      robot.send { room: "#reminder" }, "22時ですよー"
   )

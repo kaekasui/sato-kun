@@ -77,7 +77,7 @@ module.exports = (robot) ->
             msg.send "更新したー"
             msg.send update_response.html_url
 
-  robot.respond /(.*)をリリースして.*/i, (msg) ->
+  robot.respond /(.*)をリリースし.*/i, (msg) ->
     repo = msg.match[1]
 
     repos_url = "#{url_api_base}/orgs/#{org_name}/repos"

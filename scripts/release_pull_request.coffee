@@ -3,6 +3,7 @@
 # HUBOT_GITHUB_ORG
 
 module.exports = (robot) ->
+  cronJob = require('cron').CronJob
   github = require("githubot")(robot)
   org_name = process.env.HUBOT_GITHUB_ORG
   url_api_base = "https://api.github.com"
@@ -78,12 +79,23 @@ module.exports = (robot) ->
             msg.send update_response.html_url
 
   robot.respond /(.*)をリリースし.*/i, (msg) ->
-    releaseReadiness(msg)
-
-  releaseReadiness = (msg) ->
     repo = msg.match[1]
+    releaseReadiness(msg, repo)
 
+  new cronJob(
+    cronTime: "0 0 9 * * 0"
+    start: true
+    timeZone: "Asia/Tokyo"
+    onTick: ->
+      repo = 'anime-music'
+      response = new robot.Response(robot, { room: '#dev', user: {id: -1, name: '#dev'}, text: 'NONE', done: false }, [])
+      response.send "#{repo}: 定期リリースを開始します"
+      releaseReadiness(response, repo)
+  )
+
+  releaseReadiness = (msg, repo) ->
     repos_url = "#{url_api_base}/orgs/#{org_name}/repos"
+
     # リポジトリ一覧を取得
     github.get repos_url, {}, (res) ->
       repos = res.map (n) ->

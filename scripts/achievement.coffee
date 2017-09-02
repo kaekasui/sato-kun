@@ -41,7 +41,7 @@ module.exports = (robot) ->
     uri = 'api/admin/tasks/done_tasks'
     request
       url: "#{url}#{uri}"
-      method: 'POST'
+      method: 'GET'
       json: true
       headers:
         'Content-Type':'application/json'
@@ -52,9 +52,12 @@ module.exports = (robot) ->
         else if res.statusCode == 200
           cards = body.tasks.map (card) ->
             card = '- ' + card.card_name
-          list = '```\n' + cards.join('\n') + '```\n'
-          robot.send { room: "#reminder" }, "たったらーん♪\n昨日は#{cards.length}件達成しました！"
-          robot.send { room: "#reminder" }, list
+          if cards.length > 0
+            list = '```\n' + cards.join('\n') + '```\n'
+            robot.send { room: "#reminder" }, "たったらーん♪\n昨日は#{cards.length}件達成しました！"
+            robot.send { room: "#reminder" }, list
+          else
+            robot.send { room: "#reminder" }, "昨日は何も達成できてません・・・"
         else
           robot.send { room: "#reminder" }, "statusCode: #{res.statusCode}"
 

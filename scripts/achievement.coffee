@@ -49,8 +49,12 @@ module.exports = (robot) ->
       , (err, res, body) ->
         if err
           robot.send { room: "#reminder" }, "err: #{err}"
-        else if res.statusCode == 201 || res.statusCode == 200
-          robot.send { room: "#reminder" }, "実行完了"
+        else if res.statusCode == 200
+          cards = body.tasks.map (card) ->
+            card = '- ' + card.card_name
+          list = '```\n' + cards.join('\n') + '```\n'
+          robot.send { room: "#reminder" }, "たったらーん♪\n昨日は#{cards.length}件達成しました！"
+          robot.send { room: "#reminder" }, list
         else
           robot.send { room: "#reminder" }, "statusCode: #{res.statusCode}"
 

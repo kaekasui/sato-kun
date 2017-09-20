@@ -37,6 +37,19 @@ module.exports = (robot) ->
         else
           robot.send { room: "#reminder" }, "statusCode: #{res.statusCode}"
 
+  deleteDoneCards = () ->
+    uri = 'api/admin/tasks/all_done_tasks'
+    request
+      url: "#{url}#{uri}"
+      method: 'DELETE'
+      json: true
+      headers:
+        'Content-Type':'application/json'
+        'Authorization': "Token token=#{access_token}"
+      , (err, res, body) ->
+        if err
+          robot.send { room: "#reminder" }, "err: #{err}"
+
   setDiffCards = () ->
     uri = 'api/admin/tasks/done_tasks'
     request
@@ -71,6 +84,15 @@ module.exports = (robot) ->
       setDoneCards(anime_board_id, anime_done_list_id)
       setDoneCards(account_board_id, account_done_list_id)
   )
+
+  # 7時05分
+  new cronJob(
+    cronTime: "0 5 7 * * *"
+    start: true
+    timeZone: "Asia/Tokyo"
+    onTick: ->
+      deleteDoneCards()
+    )
 
   # 7時10分
   new cronJob(

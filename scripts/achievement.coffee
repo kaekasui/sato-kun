@@ -1,3 +1,6 @@
+# Description:
+#   TrelloのTODO管理
+
 # API_ACCESS_TOKEN
 # API_URL
 # TRELLO_BOARD_ID

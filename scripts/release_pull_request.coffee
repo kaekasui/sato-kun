@@ -1,3 +1,7 @@
+# Description:
+#   自動リリース機能。masterからproductionにマージするPRを自動生成する。
+#   日曜日のAM9:00とAM9:10に実行。
+
 # HUBOT_GITHUB_TOKEN
 # HUBOT_GITHUB_USER
 # HUBOT_GITHUB_ORG

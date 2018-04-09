@@ -1,3 +1,6 @@
+# Description:
+#   朝にあいさつをするBot
+
 cronJob = require('cron').CronJob
 
 module.exports = (robot) ->
@@ -7,12 +10,4 @@ module.exports = (robot) ->
     timeZone: "Asia/Tokyo"
     onTick: ->
       robot.send { room: "#reminder" }, "おはよー"
-  )
-
-  new cronJob(
-    cronTime: "0 0 22 * * *"
-    start: true
-    timeZone: "Asia/Tokyo"
-    onTick: ->
-      robot.send { room: "#reminder" }, "22時ですよー"
   )

@@ -1,3 +1,6 @@
+# Description:
+#   自動リリース機能。masterの内容をproductionにマージする。
+
 # HUBOT_GITHUB_TOKEN
 # HUBOT_GITHUB_USER
 # HUBOT_GITHUB_ORG

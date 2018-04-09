@@ -1,3 +1,6 @@
+# Description:
+#   docomo AI を利用したチャット
+
 getTimeDiffAsMinutes = (old_msec) ->
   now = new Date()
   old = new Date(old_msec)

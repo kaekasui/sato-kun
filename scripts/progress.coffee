@@ -1,3 +1,6 @@
+# Description:
+#   TrelloのTODO管理
+
 # TRELLO_API_KEY
 # TRELLO_API_TOKEN
 # TRELLO_TODAY_LIST_ID

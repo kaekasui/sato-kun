@@ -1,3 +1,6 @@
+# Description:
+#   バージョンを取得
+
 module.exports = (robot) ->
   github = require("githubot")(robot)
   org_name = process.env.HUBOT_GITHUB_ORG

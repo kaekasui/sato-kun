@@ -90,12 +90,21 @@ module.exports = (robot) ->
       repo = 'anime-music'
       response = new robot.Response(robot, { room: '#dev', user: {id: -1, name: '#dev'}, text: 'NONE', done: false }, [])
       response.send "#{repo}: 定期リリースを開始します"
-      releaseReadiness(response, repo)
+      releaseReadiness(response, "#{url_api_base}/orgs/#{org_name}/repos", repo)
   )
 
-  releaseReadiness = (msg, repo) ->
-    repos_url = "#{url_api_base}/orgs/#{org_name}/repos"
+  new cronJob(
+    cronTime: "0 10 9 * * 0"
+    start: true
+    timeZone: "Asia/Tokyo"
+    onTick: ->
+      repo = 'cryuni_sim'
+      response = new robot.Response(robot, { room: '#dev', user: {id: -1, name: '#dev'}, text: 'NONE', done: false }, [])
+      response.send "#{repo}: 定期リリースを開始します"
+      releaseReadiness(response, "#{url_api_base}/repos", repo)
+  )
 
+  releaseReadiness = (msg, repos_url, repo) ->
     # リポジトリ一覧を取得
     github.get repos_url, {}, (res) ->
       repos = res.map (n) ->

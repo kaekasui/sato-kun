@@ -10,6 +10,7 @@ module.exports = (robot) ->
   cronJob = require('cron').CronJob
   github = require("githubot")(robot)
   org_name = process.env.HUBOT_GITHUB_ORG
+  user_name = 'kaekasui'
   url_api_base = "https://api.github.com"
   b64decode = (encodedStr) ->
     new Buffer(encodedStr, 'base64').toString()
@@ -105,7 +106,7 @@ module.exports = (robot) ->
       repo = 'cryuni_sim'
       response = new robot.Response(robot, { room: '#dev', user: {id: -1, name: '#dev'}, text: 'NONE', done: false }, [])
       response.send "#{repo}: 定期リリースを開始します"
-      releaseReadiness(response, "#{url_api_base}/repos", repo)
+      releaseReadiness(response, "#{url_api_base}/users/#{user_name}/repos", repo)
   )
 
   releaseReadiness = (msg, repos_url, repo) ->

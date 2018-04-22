@@ -15,7 +15,7 @@ module.exports = (robot) ->
   b64decode = (encodedStr) ->
     new Buffer(encodedStr, 'base64').toString()
 
-  createPullRequest = (url, params, msg, repo) ->
+  createPullRequest = (url, params, msg, repo, target) ->
     github.post url, params, (response) ->
       commits_url = "#{response.commits_url}?per_page=100"
       github.get commits_url, (commits) ->
@@ -27,7 +27,11 @@ module.exports = (robot) ->
         pr_body += "\n"
         pr_body += "URL:\n"
 
-        readme = "#{url_api_base}/repos/#{org_name}/#{repo}/readme"
+        readme =
+          if target == 'orgs'
+            "#{url_api_base}/repos/#{org_name}/#{repo}/readme"
+          else if target == 'users'
+            "#{url_api_base}/repos/#{user_name}/#{repo}/readme"
         github.get readme, {}, (res) ->
           content = b64decode(res.content)
 
@@ -49,7 +53,7 @@ module.exports = (robot) ->
             msg.send 'PR作成した！マージよろしく！'
             msg.send update_response.html_url
 
-  updatePullRequest = (url, msg, repo) ->
+  updatePullRequest = (url, msg, repo, target) ->
     github.get url, (response) ->
       commits_url = "#{response.commits_url}?per_page=100"
       github.get commits_url, (commits) ->
@@ -61,7 +65,11 @@ module.exports = (robot) ->
         pr_body += "\n"
         pr_body += "URL:\n"
 
-        readme = "#{url_api_base}/repos/#{org_name}/#{repo}/readme"
+        readme =
+          if target == 'orgs'
+            "#{url_api_base}/repos/#{org_name}/#{repo}/readme"
+          else if target == 'users'
+            "#{url_api_base}/repos/#{user_name}/#{repo}/readme"
         github.get readme, {}, (res) ->
           content = b64decode(res.content)
 
@@ -83,9 +91,9 @@ module.exports = (robot) ->
             msg.send "更新したー"
             msg.send update_response.html_url
 
-  robot.respond /(.*)をリリースし.*/i, (msg) ->
-    repo = msg.match[1]
-    releaseReadiness(msg, repo)
+  robot.respond /anime-musicをリリースし.*/i, (msg) ->
+    repo = 'anime-music'
+    releaseReadiness('orgs', repo)
 
   new cronJob(
     cronTime: "0 0 9 * * 0"
@@ -93,10 +101,13 @@ module.exports = (robot) ->
     timeZone: "Asia/Tokyo"
     onTick: ->
       repo = 'anime-music'
-      response = new robot.Response(robot, { room: '#dev', user: {id: -1, name: '#dev'}, text: 'NONE', done: false }, [])
       response.send "#{repo}: 定期リリースを開始します"
-      releaseReadiness(response, "#{url_api_base}/orgs/#{org_name}/repos", repo)
+      releaseReadiness('orgs', repo)
   )
+
+  robot.respond /cryuni_simをリリースし.*/i, (msg) ->
+    repo = 'cryuni_sim'
+    releaseReadiness('users', repo)
 
   new cronJob(
     cronTime: "0 10 9 * * 0"
@@ -104,12 +115,22 @@ module.exports = (robot) ->
     timeZone: "Asia/Tokyo"
     onTick: ->
       repo = 'cryuni_sim'
-      response = new robot.Response(robot, { room: '#dev', user: {id: -1, name: '#dev'}, text: 'NONE', done: false }, [])
       response.send "#{repo}: 定期リリースを開始します"
-      releaseReadiness(response, "#{url_api_base}/users/#{user_name}/repos", repo)
+      releaseReadiness('users', repo)
   )
 
-  releaseReadiness = (msg, repos_url, repo) ->
+  releaseReadiness = (target, repo) ->
+    msg = new robot.Response(robot, { room: '#dev', user: {id: -1, name: '#dev'}, text: 'NONE', done: false }, [])
+    repos_url = ''
+    create_pulls_url = ''
+    update_pull_url = ''
+    if target == 'orgs'
+      repos_url = "#{url_api_base}/orgs/#{org_name}/repos"
+      create_pull_url = "#{url_api_base}/repos/#{org_name}/#{repo}/pulls"
+    else if target == 'users'
+      repos_url = "#{url_api_base}/users/#{user_name}/repos"
+      create_pull_url = "#{url_api_base}/repos/#{user_name}/#{repo}/pulls"
+
     # リポジトリ一覧を取得
     github.get repos_url, {}, (res) ->
       repos = res.map (n) ->
@@ -117,23 +138,27 @@ module.exports = (robot) ->
       if repos.includes(repo)
         msg.send "#{repo}でいいよね？"
 
-        pulls_url = "#{url_api_base}/repos/#{org_name}/#{repo}/pulls"
         params = {
           "title": "#{new Date().toLocaleDateString()} リリース"
           "head": 'master'
-          "base": 'production'
+          "base": 'production',
+          "body": ''
         }
         # プルリクエストを確認する
-        github.get pulls_url, params, (response) ->
+        github.get create_pull_url, params, (response) ->
           if response.length > 0
             msg.send "もうある、更新しとく。"
-            pull_url = "#{url_api_base}/repos/#{org_name}/#{repo}/pulls/#{response[0].number}"
+            update_pull_url = ''
+            if target == 'orgs'
+              update_pull_url = "#{url_api_base}/repos/#{org_name}/#{repo}/pulls/#{response[0].number}"
+            else if target == 'users'
+              update_pull_url = "#{url_api_base}/repos/#{user_name}/#{repo}/pulls/#{response[0].number}"
             # プルリクエストを更新
-            updatePullRequest(pull_url, msg, repo)
+            updatePullRequest(update_pull_url, msg, repo, target)
           else
             msg.send 'PR作成する・・・'
             # プルリクエストを作成
-            createPullRequest(pulls_url, params, msg, repo)
+            createPullRequest(create_pull_url, params, msg, repo, target)
 
         github.handleErrors (response) ->
           if response.body.indexOf("No commits") > -1

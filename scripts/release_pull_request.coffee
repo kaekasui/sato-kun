@@ -1,6 +1,7 @@
 # Description:
 #   自動リリース機能。masterからproductionにマージするPRを自動生成する。
 #   日曜日のAM9:00とAM9:10に実行。
+#   また、手動で実行も可能。
 
 # HUBOT_GITHUB_TOKEN
 # HUBOT_GITHUB_USER
@@ -53,7 +54,12 @@ module.exports = (robot) ->
             msg.send 'PR作成した！マージよろしく！'
             msg.send update_response.html_url
 
-  updatePullRequest = (url, msg, repo, target) ->
+  updatePullRequest = (msg, repo, target, number) ->
+    url =
+      switch target
+        when 'orgs' then "#{url_api_base}/repos/#{org_name}/#{repo}/pulls/#{number}"
+        when 'users' then "#{url_api_base}/repos/#{user_name}/#{repo}/pulls/#{number}"
+
     github.get url, (response) ->
       commits_url = "#{response.commits_url}?per_page=100"
       github.get commits_url, (commits) ->
@@ -92,8 +98,9 @@ module.exports = (robot) ->
             msg.send update_response.html_url
 
   robot.respond /anime-musicをリリースし.*/i, (msg) ->
-    repo = 'anime-music'
-    releaseReadiness('orgs', repo)
+    releaseReadiness('orgs', 'anime-music')
+  robot.respond /cryuni_simをリリースし.*/i, (msg) ->
+    releaseReadiness('users', 'cryuni_sim')
 
   new cronJob(
     cronTime: "0 0 9 * * 0"
@@ -104,10 +111,6 @@ module.exports = (robot) ->
       response.send "#{repo}: 定期リリースを開始します"
       releaseReadiness('orgs', repo)
   )
-
-  robot.respond /cryuni_simをリリースし.*/i, (msg) ->
-    repo = 'cryuni_sim'
-    releaseReadiness('users', repo)
 
   new cronJob(
     cronTime: "0 10 9 * * 0"
@@ -121,15 +124,14 @@ module.exports = (robot) ->
 
   releaseReadiness = (target, repo) ->
     msg = new robot.Response(robot, { room: '#dev', user: {id: -1, name: '#dev'}, text: 'NONE', done: false }, [])
-    repos_url = ''
-    create_pulls_url = ''
-    update_pull_url = ''
-    if target == 'orgs'
-      repos_url = "#{url_api_base}/orgs/#{org_name}/repos"
-      create_pull_url = "#{url_api_base}/repos/#{org_name}/#{repo}/pulls"
-    else if target == 'users'
-      repos_url = "#{url_api_base}/users/#{user_name}/repos"
-      create_pull_url = "#{url_api_base}/repos/#{user_name}/#{repo}/pulls"
+    repos_url =
+      switch target
+        when 'orgs' then "#{url_api_base}/orgs/#{org_name}/repos"
+        when 'users' then "#{url_api_base}/users/#{user_name}/repos"
+    create_pull_url =
+      switch target
+        when 'orgs' then "#{url_api_base}/repos/#{org_name}/#{repo}/pulls"
+        when 'users' then "#{url_api_base}/repos/#{user_name}/#{repo}/pulls"
 
     # リポジトリ一覧を取得
     github.get repos_url, {}, (res) ->
@@ -141,20 +143,14 @@ module.exports = (robot) ->
         params = {
           "title": "#{new Date().toLocaleDateString()} リリース"
           "head": 'master'
-          "base": 'production',
-          "body": ''
+          "base": 'production'
         }
         # プルリクエストを確認する
         github.get create_pull_url, params, (response) ->
           if response.length > 0
             msg.send "もうある、更新しとく。"
-            update_pull_url = ''
-            if target == 'orgs'
-              update_pull_url = "#{url_api_base}/repos/#{org_name}/#{repo}/pulls/#{response[0].number}"
-            else if target == 'users'
-              update_pull_url = "#{url_api_base}/repos/#{user_name}/#{repo}/pulls/#{response[0].number}"
             # プルリクエストを更新
-            updatePullRequest(update_pull_url, msg, repo, target)
+            updatePullRequest(msg, repo, target, response[0].number)
           else
             msg.send 'PR作成する・・・'
             # プルリクエストを作成

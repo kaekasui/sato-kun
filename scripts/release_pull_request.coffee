@@ -51,8 +51,16 @@ module.exports = (robot) ->
 
           update_data = { body: pr_body }
           github.patch response.url, update_data, (update_response) ->
-            msg.send 'PR作成した！マージよろしく！'
-            msg.send update_response.html_url
+            get_tags_url =
+              switch target
+                when 'orgs' then "#{url_api_base}/repos/#{org_name}/#{repo}/git/refs/tags"
+                when 'users' then "#{url_api_base}/repos/#{user_name}/#{repo}/git/refs/tags"
+            github.get get_tags_url, (tags_response) ->
+              msg.send 'PR作成した！マージよろしく！あと、tag生成もよろしく！'
+              msg.send update_response.html_url
+              msg.send 'ちなみに現在のタグは・・・'
+              tag_names = tags_response.map (tags) -> tags.ref
+              msg.send tag_names
 
   updatePullRequest = (msg, repo, target, number) ->
     url =

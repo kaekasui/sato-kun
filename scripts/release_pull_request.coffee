@@ -1,7 +1,6 @@
 # Description:
 #   自動リリース機能。masterからproductionにマージするPRを自動生成する。
 #   日曜日のAM9:00とAM9:10に実行。
-#   また、手動で実行も可能。
 
 # HUBOT_GITHUB_TOKEN
 # HUBOT_GITHUB_USER
@@ -16,7 +15,7 @@ module.exports = (robot) ->
   b64decode = (encodedStr) ->
     new Buffer(encodedStr, 'base64').toString()
 
-  createPullRequest = (url, params, msg, repo, target) ->
+  createPullRequest = (url, params, msg, repo) ->
     github.post url, params, (response) ->
       commits_url = "#{response.commits_url}?per_page=100"
       github.get commits_url, (commits) ->
@@ -28,11 +27,7 @@ module.exports = (robot) ->
         pr_body += "\n"
         pr_body += "URL:\n"
 
-        readme =
-          if target == 'orgs'
-            "#{url_api_base}/repos/#{org_name}/#{repo}/readme"
-          else if target == 'users'
-            "#{url_api_base}/repos/#{user_name}/#{repo}/readme"
+        readme = "#{url_api_base}/repos/#{org_name}/#{repo}/readme"
         github.get readme, {}, (res) ->
           content = b64decode(res.content)
 
@@ -54,12 +49,7 @@ module.exports = (robot) ->
             msg.send 'PR作成した！マージよろしく！'
             msg.send update_response.html_url
 
-  updatePullRequest = (msg, repo, target, number) ->
-    url =
-      switch target
-        when 'orgs' then "#{url_api_base}/repos/#{org_name}/#{repo}/pulls/#{number}"
-        when 'users' then "#{url_api_base}/repos/#{user_name}/#{repo}/pulls/#{number}"
-
+  updatePullRequest = (url, msg, repo) ->
     github.get url, (response) ->
       commits_url = "#{response.commits_url}?per_page=100"
       github.get commits_url, (commits) ->
@@ -71,11 +61,7 @@ module.exports = (robot) ->
         pr_body += "\n"
         pr_body += "URL:\n"
 
-        readme =
-          if target == 'orgs'
-            "#{url_api_base}/repos/#{org_name}/#{repo}/readme"
-          else if target == 'users'
-            "#{url_api_base}/repos/#{user_name}/#{repo}/readme"
+        readme = "#{url_api_base}/repos/#{org_name}/#{repo}/readme"
         github.get readme, {}, (res) ->
           content = b64decode(res.content)
 
@@ -97,10 +83,9 @@ module.exports = (robot) ->
             msg.send "更新したー"
             msg.send update_response.html_url
 
-  robot.respond /anime-musicをリリースし.*/i, (msg) ->
-    releaseReadiness('orgs', 'anime-music')
-  robot.respond /cryuni_simをリリースし.*/i, (msg) ->
-    releaseReadiness('users', 'cryuni_sim')
+  robot.respond /(.*)をリリースし.*/i, (msg) ->
+    repo = msg.match[1]
+    releaseReadiness(msg, repo)
 
   new cronJob(
     cronTime: "0 0 9 * * 0"
@@ -108,8 +93,9 @@ module.exports = (robot) ->
     timeZone: "Asia/Tokyo"
     onTick: ->
       repo = 'anime-music'
+      response = new robot.Response(robot, { room: '#dev', user: {id: -1, name: '#dev'}, text: 'NONE', done: false }, [])
       response.send "#{repo}: 定期リリースを開始します"
-      releaseReadiness('orgs', repo)
+      releaseReadiness(response, "#{url_api_base}/orgs/#{org_name}/repos", repo)
   )
 
   new cronJob(
@@ -118,21 +104,12 @@ module.exports = (robot) ->
     timeZone: "Asia/Tokyo"
     onTick: ->
       repo = 'cryuni_sim'
+      response = new robot.Response(robot, { room: '#dev', user: {id: -1, name: '#dev'}, text: 'NONE', done: false }, [])
       response.send "#{repo}: 定期リリースを開始します"
-      releaseReadiness('users', repo)
+      releaseReadiness(response, "#{url_api_base}/users/#{user_name}/repos", repo)
   )
 
-  releaseReadiness = (target, repo) ->
-    msg = new robot.Response(robot, { room: '#dev', user: {id: -1, name: '#dev'}, text: 'NONE', done: false }, [])
-    repos_url =
-      switch target
-        when 'orgs' then "#{url_api_base}/orgs/#{org_name}/repos"
-        when 'users' then "#{url_api_base}/users/#{user_name}/repos"
-    create_pull_url =
-      switch target
-        when 'orgs' then "#{url_api_base}/repos/#{org_name}/#{repo}/pulls"
-        when 'users' then "#{url_api_base}/repos/#{user_name}/#{repo}/pulls"
-
+  releaseReadiness = (msg, repos_url, repo) ->
     # リポジトリ一覧を取得
     github.get repos_url, {}, (res) ->
       repos = res.map (n) ->
@@ -140,21 +117,23 @@ module.exports = (robot) ->
       if repos.includes(repo)
         msg.send "#{repo}でいいよね？"
 
+        pulls_url = "#{url_api_base}/repos/#{org_name}/#{repo}/pulls"
         params = {
           "title": "#{new Date().toLocaleDateString()} リリース"
           "head": 'master'
           "base": 'production'
         }
         # プルリクエストを確認する
-        github.get create_pull_url, params, (response) ->
+        github.get pulls_url, params, (response) ->
           if response.length > 0
             msg.send "もうある、更新しとく。"
+            pull_url = "#{url_api_base}/repos/#{org_name}/#{repo}/pulls/#{response[0].number}"
             # プルリクエストを更新
-            updatePullRequest(msg, repo, target, response[0].number)
+            updatePullRequest(pull_url, msg, repo)
           else
             msg.send 'PR作成する・・・'
             # プルリクエストを作成
-            createPullRequest(create_pull_url, params, msg, repo, target)
+            createPullRequest(pulls_url, params, msg, repo)
 
         github.handleErrors (response) ->
           if response.body.indexOf("No commits") > -1

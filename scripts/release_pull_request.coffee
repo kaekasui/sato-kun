@@ -165,6 +165,8 @@ module.exports = (robot) ->
             createPullRequest(create_pull_url, params, msg, repo, target)
 
         github.handleErrors (response) ->
+          msg.send 'response body =='
+          mgs.send "#{response.body}"
           if response.body.indexOf("No commits") > -1
             msg.send 'あれ？差分ないし、特に作る必要なさそう・・・（仕事しろ'
       else

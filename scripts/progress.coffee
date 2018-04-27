@@ -32,7 +32,7 @@ module.exports = (robot) ->
       else
         robot.send { room: "#reminder" }, JSON.stringify(error)
 
-  # 13時
+  # 12時
   new cronJob(
     cronTime: "0 0 12 * * *"
     start: true
@@ -42,9 +42,9 @@ module.exports = (robot) ->
       getCards(pre_comment, today_list_id)
   )
 
-  # 14時
+  # 13時
   new cronJob(
-    cronTime: "0 0 14 * * *"
+    cronTime: "0 0 13 * * *"
     start: true
     timeZone: "Asia/Tokyo"
     onTick: ->
@@ -53,9 +53,9 @@ module.exports = (robot) ->
       getCards(pre_comment, anime_list_id)
   )
 
-  # 18時
+  # 14時
   new cronJob(
-    cronTime: "0 0 18 * * *"
+    cronTime: "0 0 14 * * *"
     start: true
     timeZone: "Asia/Tokyo"
     onTick: ->

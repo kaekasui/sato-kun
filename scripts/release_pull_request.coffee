@@ -60,7 +60,7 @@ module.exports = (robot) ->
               msg.send update_response.html_url
               msg.send 'ちなみに現在のタグは・・・'
               tag_names = tags_response.map (tags) -> tags.ref
-              msg.send tag_names
+              msg.send "#{tag_names.join()}"
 
   updatePullRequest = (msg, repo, target, number) ->
     url =
@@ -150,6 +150,7 @@ module.exports = (robot) ->
 
         params = {
           "title": "#{new Date().toLocaleDateString()} リリース"
+          "body": 'body is a required item.'
           "head": 'master'
           "base": 'production'
         }
@@ -165,8 +166,10 @@ module.exports = (robot) ->
             createPullRequest(create_pull_url, params, msg, repo, target)
 
         github.handleErrors (response) ->
-          msg.send 'response body =='
-          mgs.send "#{response.body[0].toString()}"
+          msg.send 'handle errors response body'
+          msg.send '```'
+          msg.send "#{response.body.toString()}"
+          msg.send '```'
           if response.body.indexOf("No commits") > -1
             msg.send 'あれ？差分ないし、特に作る必要なさそう・・・（仕事しろ'
       else

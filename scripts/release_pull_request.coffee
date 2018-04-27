@@ -166,7 +166,7 @@ module.exports = (robot) ->
 
         github.handleErrors (response) ->
           msg.send 'response body =='
-          mgs.send "#{response.body}"
+          mgs.send "#{response.body[0].toString()}"
           if response.body.indexOf("No commits") > -1
             msg.send 'あれ？差分ないし、特に作る必要なさそう・・・（仕事しろ'
       else

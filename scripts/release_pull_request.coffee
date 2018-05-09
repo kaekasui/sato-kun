@@ -178,11 +178,10 @@ module.exports = (robot) ->
             createPullRequest(create_pull_url, params, msg, repo, target)
 
         github.handleErrors (response) ->
-          msg.send 'handle errors response body'
-          msg.send '```'
-          msg.send "#{response.body.toString()}"
-          msg.send '```'
           if response.body.indexOf("No commits") > -1
             msg.send 'あれ？差分ないし、特に作る必要なさそう・・・（仕事しろ'
+          else
+            msg.send 'handle errors response body'
+            msg.send "```\n#{response.body.toString()}\n```"
       else
         msg.send "#{repo}なんてないけど・・・"

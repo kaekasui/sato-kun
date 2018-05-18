@@ -21,7 +21,8 @@ module.exports = (robot) ->
   anime_list_id = process.env.TRELLO_ANIME_LIST_ID
 
   getCards = (pre_comment, list_id) ->
-    get_cards_url = url + 'lists/' + list_id + '/cards?fields=name&key=' + key + '&token=' + token
+    cards_url = url + 'lists/' + list_id + '/cards'
+    get_cards_url = cards_url + '?fields=name&key=' + key + '&token=' + token
     request { url: get_cards_url }, (error, response, body) ->
       if !error
         json = JSON.parse body

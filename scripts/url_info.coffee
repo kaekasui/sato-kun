@@ -26,7 +26,8 @@ module.exports = (robot) ->
         github.get readme, {}, (res) ->
           content = b64decode(res.content)
 
-          production_url_match = content.match(/## 本番環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/)
+          regex = /## 本番環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
+          production_url_match = content.match(regex)
           if production_url_match != null
             production_url = production_url_match[0].replace(/## 本番環境\n/, '')
 

@@ -20,13 +20,13 @@ module.exports = (robot) ->
     github.post url, params, (response) ->
       commits_url = "#{response.commits_url}?per_page=100"
       github.get commits_url, (commits) ->
-        pr_body = "リリース用のPRを作成しました。\n"
+        prBody = "リリース用のPRを作成しました。\n"
         for commit in commits
           unless commit.commit.message.match(/Merge pull request/)
             continue
-          pr_body += "- #{commit.commit.message.replace(/\n\n/g, ' ').replace(/Merge pull request /, '').replace(new RegExp("from #{org_name}\/[A-Za-z0-9_-]*"), '')}\n"
-        pr_body += "\n"
-        pr_body += "URL:\n"
+          prBody += "- #{commit.commit.message.replace(/\n\n/g, ' ').replace(/Merge pull request /, '').replace(new RegExp("from #{org_name}\/[A-Za-z0-9_-]*"), '')}\n"
+        prBody += "\n"
+        prBody += "URL:\n"
 
         readme =
           if target == 'orgs'
@@ -40,16 +40,17 @@ module.exports = (robot) ->
           if production_url_match != null
             production_url = production_url_match[0].replace(/## 本番環境\n- /, '')
 
-          staging_url_match = content.match(/## ステージング環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/)
+          stagingRegex = /## ステージング環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
+          staging_url_match = content.match(stagingRegex)
           if staging_url_match != null
             staging_url = staging_url_match[0].replace(/## ステージング環境\n- /, '')
 
           if production_url != undefined
-            pr_body += "- production: #{production_url}\n"
+            prBody += "- production: #{production_url}\n"
           if staging_url != undefined
-            pr_body += "- master: #{staging_url}\n"
+            prBody += "- master: #{staging_url}\n"
 
-          update_data = { body: pr_body }
+          update_data = { body: prBody }
           github.patch response.url, update_data, (update_response) ->
             get_tags_url =
               switch target
@@ -71,13 +72,13 @@ module.exports = (robot) ->
     github.get url, (response) ->
       commits_url = "#{response.commits_url}?per_page=100"
       github.get commits_url, (commits) ->
-        pr_body = "リリース用のPRを作成しました。\n"
+        prBody = "リリース用のPRを作成しました。\n"
         for commit in commits
           unless commit.commit.message.match(/Merge pull request/)
             continue
-          pr_body += "- #{commit.commit.message.replace(/\n\n/g, ' ').replace(/Merge pull request /, '').replace(new RegExp("from #{org_name}\/[A-Za-z0-9_-]*"), '')}\n"
-        pr_body += "\n"
-        pr_body += "URL:\n"
+          prBody += "- #{commit.commit.message.replace(/\n\n/g, ' ').replace(/Merge pull request /, '').replace(new RegExp("from #{org_name}\/[A-Za-z0-9_-]*"), '')}\n"
+        prBody += "\n"
+        prBody += "URL:\n"
 
         readme =
           if target == 'orgs'
@@ -96,11 +97,11 @@ module.exports = (robot) ->
             staging_url = staging_url_match[0].replace(/## ステージング環境\n- /, '')
 
           if production_url != undefined
-            pr_body += "- production: #{production_url}\n"
+            prBody += "- production: #{production_url}\n"
           if staging_url != undefined
-            pr_body += "- master: #{staging_url}\n"
+            prBody += "- master: #{staging_url}\n"
 
-          update_data = { body: pr_body }
+          update_data = { body: prBody }
           github.patch response.url, update_data, (update_response) ->
             msg.send "更新したー"
             msg.send update_response.html_url

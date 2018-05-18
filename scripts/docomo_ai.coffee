@@ -28,7 +28,8 @@ module.exports = (robot) ->
     if diff_minutes > TTL_MINUTES
       context = ''
 
-    url = 'https://api.apigw.smt.docomo.ne.jp/dialogue/v1/dialogue?APIKEY=' + DOCOMO_API_KEY
+    base_url = 'https://api.apigw.smt.docomo.ne.jp/dialogue/v1/'
+    url = base_url + 'dialogue?APIKEY=' + DOCOMO_API_KEY
     user_name = msg.message.user.name
 
     request = require('request')

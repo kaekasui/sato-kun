@@ -29,14 +29,17 @@ module.exports = (robot) ->
           regex = /## 本番環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
           production_url_match = content.match(regex)
           if production_url_match != null
-            production_url = production_url_match[0].replace(/## 本番環境\n/, '')
+            production_url = "production: "
+            production_url += production_url_match[0].replace(/## 本番環境\n/, '')
 
-          staging_url_match = content.match(/## ステージング環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/)
+          regex = /## ステージング環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
+          staging_url_match = content.match(regex)
           if staging_url_match != null
-            staging_url = staging_url_match[0].replace(/## ステージング環境\n/, '')
+            staging_url = "stagins: "
+            staging_url += staging_url_match[0].replace(/## ステージング環境\n/, '')
 
           if production_url == undefined && staging_url == undefined
             msg.send '設定されてないぽい'
-          msg.send "```\nproduction: #{production_url}\nstaging: #{staging_url}\n```"
+          msg.send "```\n#{production_url}\n#{staging_url}\n```"
       else
         msg.send "#{repo}なんてないけど・・・"

@@ -10,14 +10,21 @@
 module.exports = (robot) ->
   cronJob = require('cron').CronJob
   github = require("githubot")(robot)
-  org_name = process.env.HUBOT_GITHUB_ORG
-  user_name = 'kaekasui'
-  url_api_base = "https://api.github.com"
+  orgName = process.env.HUBOT_GITHUB_ORG
+  userName = 'kaekasui'
+  urlApiBase = "https://api.github.com"
   b64decode = (encodedStr) ->
     new Buffer(encodedStr, 'base64').toString()
 
   productionRegex = /## 本番環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
   stagingRegex = /## ステージング環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
+
+  readmeOrgsUrl = "#{urlApiBase}/repos/#{orgName}/#{repo}/readme"
+  readmeUsersUrl = "#{urlApiBase}/repos/#{userName}/#{repo}/readme"
+  tagOrgsUrl = "#{urlApiBase}/repos/#{orgName}/#{repo}/git/refs/tags"
+  tagUsersUrl = "#{urlApiBase}/repos/#{userName}/#{repo}/git/refs/tags"
+  pullsOrgsUrl = "#{urlApiBase}/repos/#{orgName}/#{repo}/pulls"
+  pullsUsersUrl = "#{urlApiBase}/repos/#{userName}/#{repo}/pulls"
 
   createPullRequest = (url, params, msg, repo, target) ->
     github.post url, params, (response) ->
@@ -29,16 +36,14 @@ module.exports = (robot) ->
             continue
           replacedComment = commit.commit.message.replace(/\n\n/g, ' ')
             .replace(/Merge pull request /, '')
-            .replace(new RegExp("from #{org_name}\/[A-Za-z0-9_-]*"), '')
+            .replace(new RegExp("from #{orgName}\/[A-Za-z0-9_-]*"), '')
           prBody += "- #{replacedComment}\n"
         prBody += "\n"
         prBody += "URL:\n"
 
         readme =
-          if target == 'orgs'
-            "#{url_api_base}/repos/#{org_name}/#{repo}/readme"
-          else if target == 'users'
-            "#{url_api_base}/repos/#{user_name}/#{repo}/readme"
+          if target == 'orgs' then readmeOrgsUrl
+          else if target == 'users' then readmeUsersUrl
         github.get readme, {}, (res) ->
           content = b64decode(res.content)
 
@@ -59,8 +64,8 @@ module.exports = (robot) ->
           github.patch response.url, update_data, (update_response) ->
             get_tags_url =
               switch target
-                when 'orgs' then "#{url_api_base}/repos/#{org_name}/#{repo}/git/refs/tags"
-                when 'users' then "#{url_api_base}/repos/#{user_name}/#{repo}/git/refs/tags"
+                when 'orgs' then tagOrgsUrl
+                when 'users' then tagUsersUrl
             github.get get_tags_url, (tags_response) ->
               msg.send 'PR作成した！マージよろしく！あと、tag生成もよろしく！'
               msg.send update_response.html_url
@@ -71,8 +76,8 @@ module.exports = (robot) ->
   updatePullRequest = (msg, repo, target, number) ->
     url =
       switch target
-        when 'orgs' then "#{url_api_base}/repos/#{org_name}/#{repo}/pulls/#{number}"
-        when 'users' then "#{url_api_base}/repos/#{user_name}/#{repo}/pulls/#{number}"
+        when 'orgs' then "#{pullsOrgsUrl}/#{number}"
+        when 'users' then "#{pullsUsersUrl}/#{number}"
 
     github.get url, (response) ->
       commits_url = "#{response.commits_url}?per_page=100"
@@ -81,15 +86,16 @@ module.exports = (robot) ->
         for commit in commits
           unless commit.commit.message.match(/Merge pull request/)
             continue
-          prBody += "- #{commit.commit.message.replace(/\n\n/g, ' ').replace(/Merge pull request /, '').replace(new RegExp("from #{org_name}\/[A-Za-z0-9_-]*"), '')}\n"
+          replacedComment = commit.commit.message.replace(/\n\n/g, ' ')
+            .replace(/Merge pull request /, '')
+            replace(new RegExp("from #{orgName}\/[A-Za-z0-9_-]*"), '')
+          prBody += "- #{replacedComment}\n"
         prBody += "\n"
         prBody += "URL:\n"
 
         readme =
-          if target == 'orgs'
-            "#{url_api_base}/repos/#{org_name}/#{repo}/readme"
-          else if target == 'users'
-            "#{url_api_base}/repos/#{user_name}/#{repo}/readme"
+          if target == 'orgs' then readmeOrgsUrl
+          else if target == 'users' then readmeUsersUrl
         github.get readme, {}, (res) ->
           content = b64decode(res.content)
 
@@ -149,15 +155,20 @@ module.exports = (robot) ->
   )
 
   releaseReadiness = (target, repo) ->
-    msg = new robot.Response(robot, { room: '#dev', user: {id: -1, name: '#dev'}, text: 'NONE', done: false }, [])
+    msgInfo =
+      room: '#dev',
+      user: {id: -1, name: '#dev'},
+      text: 'NONE',
+      done: false
+    msg = new robot.Response(robot, msgInfo, [])
     repos_url =
       switch target
-        when 'orgs' then "#{url_api_base}/orgs/#{org_name}/repos"
-        when 'users' then "#{url_api_base}/users/#{user_name}/repos"
+        when 'orgs' then "#{urlApiBase}/orgs/#{orgName}/repos"
+        when 'users' then "#{urlApiBase}/users/#{userName}/repos"
     create_pull_url =
       switch target
-        when 'orgs' then "#{url_api_base}/repos/#{org_name}/#{repo}/pulls"
-        when 'users' then "#{url_api_base}/repos/#{user_name}/#{repo}/pulls"
+        when 'orgs' then pullsOrgsUrl
+        when 'users' then pullsUsersUrl
 
     # リポジトリ一覧を取得
     github.get repos_url, {}, (res) ->

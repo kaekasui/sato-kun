@@ -13,105 +13,71 @@ module.exports = (robot) ->
   orgName = process.env.HUBOT_GITHUB_ORG
   userName = 'kaekasui'
   urlApiBase = "https://api.github.com"
+
+  productionRegex = /## 本番環境\n*- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
+  stagingRegex = /## ステージング環境\n*- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
+
   b64decode = (encodedStr) ->
     new Buffer(encodedStr, 'base64').toString()
 
-  productionRegex = /## 本番環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
-  stagingRegex = /## ステージング環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
+  getUrlInfo = (content) ->
+    productionUrlMatch = content.match(productionRegex)
+    productionUrl = ''
+    if productionUrlMatch != null
+      productionUrl = 'production: '
+      console.log(productionUrlMatch[0])
+      productionUrl += productionUrlMatch[0].replace(/## 本番環境\n/, '')
+    stagingUrlMatch = content.match(stagingRegex)
+    stagingUrl = ''
+    if stagingUrlMatch != null
+      stagingUrl = 'staging: '
+      stagingUrl = stagingUrlMatch[0].replace(/## ステージング環境\n/, '')
+    "\n#{productionUrl}\n#{stagingUrl}\n"
 
-  readmeOrgsUrl = "#{urlApiBase}/repos/#{orgName}/#{repo}/readme"
-  readmeUsersUrl = "#{urlApiBase}/repos/#{userName}/#{repo}/readme"
-  tagOrgsUrl = "#{urlApiBase}/repos/#{orgName}/#{repo}/git/refs/tags"
-  tagUsersUrl = "#{urlApiBase}/repos/#{userName}/#{repo}/git/refs/tags"
-  pullsOrgsUrl = "#{urlApiBase}/repos/#{orgName}/#{repo}/pulls"
-  pullsUsersUrl = "#{urlApiBase}/repos/#{userName}/#{repo}/pulls"
+  getMergePRList = (commits) ->
+    body = ''
+    for commit in commits
+      unless commit.commit.message.match(/Merge pull request/)
+        continue
+      replacedComment = commit.commit.message.replace(/\n\n/g, ' ')
+        .replace(/Merge pull request /, '')
+        .replace(new RegExp("from #{orgName}\/[A-Za-z0-9_-]*"), '')
+      body += "- #{replacedComment}\n"
+    body
 
-  createPullRequest = (url, params, msg, repo, target) ->
-    github.post url, params, (response) ->
-      commits_url = "#{response.commits_url}?per_page=100"
-      github.get commits_url, (commits) ->
+  createPullRequest = (msg, params, readmeUrl, pullsUrl, tagUrl) ->
+    github.post pullsUrl, params, (response) ->
+      commitsUrl = "#{response.commits_url}?per_page=100"
+      github.get commitsUrl, (commits) ->
         prBody = "リリース用のPRを作成しました。\n"
-        for commit in commits
-          unless commit.commit.message.match(/Merge pull request/)
-            continue
-          replacedComment = commit.commit.message.replace(/\n\n/g, ' ')
-            .replace(/Merge pull request /, '')
-            .replace(new RegExp("from #{orgName}\/[A-Za-z0-9_-]*"), '')
-          prBody += "- #{replacedComment}\n"
+        prBody += getMergePRList(commits)
         prBody += "\n"
         prBody += "URL:\n"
 
-        readme =
-          if target == 'orgs' then readmeOrgsUrl
-          else if target == 'users' then readmeUsersUrl
-        github.get readme, {}, (res) ->
+        github.get readmeUrl, {}, (res) ->
           content = b64decode(res.content)
-
-          productionUrlMatch = content.match(productionRegex)
-          if productionUrlMatch != null
-            productionUrl = productionUrlMatch[0].replace(/## 本番環境\n- /, '')
-
-          staging_url_match = content.match(stagingRegex)
-          if staging_url_match != null
-            staging_url = staging_url_match[0].replace(/## ステージング環境\n- /, '')
-
-          if productionUrl != undefined
-            prBody += "- production: #{productionUrl}\n"
-          if staging_url != undefined
-            prBody += "- master: #{staging_url}\n"
-
+          prBody += getUrlInfo(content)
           update_data = { body: prBody }
           github.patch response.url, update_data, (update_response) ->
-            get_tags_url =
-              switch target
-                when 'orgs' then tagOrgsUrl
-                when 'users' then tagUsersUrl
-            github.get get_tags_url, (tags_response) ->
+            github.get tagUrl, (tags_response) ->
               msg.send 'PR作成した！マージよろしく！あと、tag生成もよろしく！'
               msg.send update_response.html_url
               msg.send 'ちなみに現在のタグは・・・'
               tag_names = tags_response.map (tags) -> tags.ref
               msg.send "#{tag_names.join()}"
 
-  updatePullRequest = (msg, repo, target, number) ->
-    url =
-      switch target
-        when 'orgs' then "#{pullsOrgsUrl}/#{number}"
-        when 'users' then "#{pullsUsersUrl}/#{number}"
-
-    github.get url, (response) ->
-      commits_url = "#{response.commits_url}?per_page=100"
-      github.get commits_url, (commits) ->
-        prBody = "リリース用のPRを作成しました。\n"
-        for commit in commits
-          unless commit.commit.message.match(/Merge pull request/)
-            continue
-          replacedComment = commit.commit.message.replace(/\n\n/g, ' ')
-            .replace(/Merge pull request /, '')
-            replace(new RegExp("from #{orgName}\/[A-Za-z0-9_-]*"), '')
-          prBody += "- #{replacedComment}\n"
+  updatePullRequest = (msg, readmeUrl, pullUrl) ->
+    github.get pullUrl, (response) ->
+      commitsUrl = "#{response.commits_url}?per_page=100"
+      github.get commitsUrl, (commits) ->
+        prBody = "リリース用のPRを更新しました。\n"
+        prBody += getMergePRList(commits)
         prBody += "\n"
         prBody += "URL:\n"
 
-        readme =
-          if target == 'orgs' then readmeOrgsUrl
-          else if target == 'users' then readmeUsersUrl
-        github.get readme, {}, (res) ->
+        github.get readmeUrl, {}, (res) ->
           content = b64decode(res.content)
-
-          productionUrlMatch = content.match(productionRegex)
-          if productionUrlMatch != null
-            productionUrl = productionUrlMatch[0].replace(/## 本番環境\n- /, '')
-
-          staging_url_match = content.match(stagingRegex)
-          if staging_url_match != null
-            staging_url = staging_url_match[0].replace(/## ステージング環境\n- /, '')
-
-          if productionUrl != undefined
-            prBody += "- production: #{productionUrl}\n"
-          if staging_url != undefined
-            prBody += "- master: #{staging_url}\n"
-
+          prBody += getUrlInfo(content)
           update_data = { body: prBody }
           github.patch response.url, update_data, (update_response) ->
             msg.send "更新したー"
@@ -161,17 +127,13 @@ module.exports = (robot) ->
       text: 'NONE',
       done: false
     msg = new robot.Response(robot, msgInfo, [])
-    repos_url =
+    reposUrl =
       switch target
         when 'orgs' then "#{urlApiBase}/orgs/#{orgName}/repos"
         when 'users' then "#{urlApiBase}/users/#{userName}/repos"
-    create_pull_url =
-      switch target
-        when 'orgs' then pullsOrgsUrl
-        when 'users' then pullsUsersUrl
 
     # リポジトリ一覧を取得
-    github.get repos_url, {}, (res) ->
+    github.get reposUrl, {}, (res) ->
       repos = res.map (n) ->
         n['name']
       if repos.includes(repo)
@@ -183,16 +145,26 @@ module.exports = (robot) ->
           "head": 'master'
           "base": 'production'
         }
+        # URL
+        repoUrl =
+          switch target
+            when 'orgs' then "#{urlApiBase}/repos/#{orgName}/#{repo}"
+            when 'users' then "#{urlApiBase}/repos/#{userName}/#{repo}"
+        readmeUrl = "#{repoUrl}/readme"
+        pullsUrl = "#{repoUrl}/pulls"
+        tagUrl = "#{repoUrl}/git/refs/tags"
+
         # プルリクエストを確認する
-        github.get create_pull_url, params, (response) ->
+        github.get pullsUrl, params, (response) ->
           if response.length > 0
             msg.send "もうある、更新しとく。"
+            pullUrl = "#{pullsUrl}/#{response[0].number}"
             # プルリクエストを更新
-            updatePullRequest(msg, repo, target, response[0].number)
+            updatePullRequest(msg, readmeUrl, pullUrl)
           else
             msg.send 'PR作成する・・・'
             # プルリクエストを作成
-            createPullRequest(create_pull_url, params, msg, repo, target)
+            createPullRequest(msg, params, readmeUrl, pullsUrl, tagUrl)
 
         github.handleErrors (response) ->
           if response.body.indexOf("No commits") > -1

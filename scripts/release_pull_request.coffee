@@ -16,6 +16,9 @@ module.exports = (robot) ->
   b64decode = (encodedStr) ->
     new Buffer(encodedStr, 'base64').toString()
 
+  productionRegex = /## 本番環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
+  stagingRegex = /## ステージング環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
+
   createPullRequest = (url, params, msg, repo, target) ->
     github.post url, params, (response) ->
       commits_url = "#{response.commits_url}?per_page=100"
@@ -24,7 +27,10 @@ module.exports = (robot) ->
         for commit in commits
           unless commit.commit.message.match(/Merge pull request/)
             continue
-          prBody += "- #{commit.commit.message.replace(/\n\n/g, ' ').replace(/Merge pull request /, '').replace(new RegExp("from #{org_name}\/[A-Za-z0-9_-]*"), '')}\n"
+          replacedComment = commit.commit.message.replace(/\n\n/g, ' ')
+            .replace(/Merge pull request /, '')
+            .replace(new RegExp("from #{org_name}\/[A-Za-z0-9_-]*"), '')
+          prBody += "- #{replacedComment}\n"
         prBody += "\n"
         prBody += "URL:\n"
 
@@ -36,17 +42,16 @@ module.exports = (robot) ->
         github.get readme, {}, (res) ->
           content = b64decode(res.content)
 
-          production_url_match = content.match(/## 本番環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/)
-          if production_url_match != null
-            production_url = production_url_match[0].replace(/## 本番環境\n- /, '')
+          productionUrlMatch = content.match(productionRegex)
+          if productionUrlMatch != null
+            productionUrl = productionUrlMatch[0].replace(/## 本番環境\n- /, '')
 
-          stagingRegex = /## ステージング環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
           staging_url_match = content.match(stagingRegex)
           if staging_url_match != null
             staging_url = staging_url_match[0].replace(/## ステージング環境\n- /, '')
 
-          if production_url != undefined
-            prBody += "- production: #{production_url}\n"
+          if productionUrl != undefined
+            prBody += "- production: #{productionUrl}\n"
           if staging_url != undefined
             prBody += "- master: #{staging_url}\n"
 
@@ -88,16 +93,16 @@ module.exports = (robot) ->
         github.get readme, {}, (res) ->
           content = b64decode(res.content)
 
-          production_url_match = content.match(/## 本番環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/)
-          if production_url_match != null
-            production_url = production_url_match[0].replace(/## 本番環境\n- /, '')
+          productionUrlMatch = content.match(productionRegex)
+          if productionUrlMatch != null
+            productionUrl = productionUrlMatch[0].replace(/## 本番環境\n- /, '')
 
-          staging_url_match = content.match(/## ステージング環境\n- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/)
+          staging_url_match = content.match(stagingRegex)
           if staging_url_match != null
             staging_url = staging_url_match[0].replace(/## ステージング環境\n- /, '')
 
-          if production_url != undefined
-            prBody += "- production: #{production_url}\n"
+          if productionUrl != undefined
+            prBody += "- production: #{productionUrl}\n"
           if staging_url != undefined
             prBody += "- master: #{staging_url}\n"
 

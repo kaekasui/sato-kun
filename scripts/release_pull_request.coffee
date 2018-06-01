@@ -89,6 +89,8 @@ module.exports = (robot) ->
     releaseReadiness('users', 'cryuni_sim')
   robot.respond /account-book-pigをリリースし.*/i, (msg) ->
     releaseReadiness('orgs', 'account-book-pig')
+  robot.respond /pig-bookをリリースし.*/i, (msg) ->
+    releaseReadiness('orgs', 'pig-book')
 
   new cronJob(
     cronTime: "0 0 9 * * 0"
@@ -116,6 +118,16 @@ module.exports = (robot) ->
     timeZone: "Asia/Tokyo"
     onTick: ->
       repo = 'cryuni_sim'
+      response.send "#{repo}: 定期リリースを開始します"
+      releaseReadiness('users', repo)
+  )
+
+  new cronJob(
+    cronTime: "0 15 9 * * 0"
+    start: true
+    timeZone: "Asia/Tokyo"
+    onTick: ->
+      repo = 'pig-book'
       response.send "#{repo}: 定期リリースを開始します"
       releaseReadiness('users', repo)
   )

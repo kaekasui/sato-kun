@@ -59,12 +59,8 @@ module.exports = (robot) ->
           prBody += getUrlInfo(content)
           update_data = { body: prBody }
           github.patch response.url, update_data, (update_response) ->
-            github.get tagUrl, (tags_response) ->
-              msg.send 'PR作成した！マージよろしく！あと、tag生成もよろしく！'
-              msg.send update_response.html_url
-              msg.send 'ちなみに現在のタグは・・・'
-              tag_names = tags_response.map (tags) -> tags.ref
-              msg.send "#{tag_names.join()}"
+            msg.send update_response.html_url
+            msg.send 'PR作成した！マージよろしく！'
 
   updatePullRequest = (msg, readmeUrl, pullUrl) ->
     github.get pullUrl, (response) ->

@@ -81,30 +81,30 @@ module.exports = (robot) ->
           robot.send { room: "#reminder" }, "diff: statusCode: #{code}"
 
   # 7時0分
-  new cronJob(
-    cronTime: "0 0 7 * * *"
-    start: true
-    timeZone: "Asia/Tokyo"
-    onTick: ->
-      setDoneCards(board_id, done_list_id)
-      setDoneCards(anime_board_id, anime_done_list_id)
-      setDoneCards(account_board_id, account_done_list_id)
-  )
+  #new cronJob(
+  #  cronTime: "0 0 7 * * *"
+  #  start: true
+  #  timeZone: "Asia/Tokyo"
+  #  onTick: ->
+  #    setDoneCards(board_id, done_list_id)
+  #    setDoneCards(anime_board_id, anime_done_list_id)
+  #    setDoneCards(account_board_id, account_done_list_id)
+  #)
 
-  # 7時05分
-  new cronJob(
-    cronTime: "0 5 7 * * *"
-    start: true
-    timeZone: "Asia/Tokyo"
-    onTick: ->
-      deleteDoneCards()
-    )
+  ## 7時05分
+  #new cronJob(
+  #  cronTime: "0 5 7 * * *"
+  #  start: true
+  #  timeZone: "Asia/Tokyo"
+  #  onTick: ->
+  #    deleteDoneCards()
+  #  )
 
-  # 7時10分
-  new cronJob(
-    cronTime: "0 10 7 * * *"
-    start: true
-    timeZone: "Asia/Tokyo"
-    onTick: ->
-      setDiffCards()
-  )
+  ## 7時10分
+  #new cronJob(
+  #  cronTime: "0 10 7 * * *"
+  #  start: true
+  #  timeZone: "Asia/Tokyo"
+  #  onTick: ->
+  #    setDiffCards()
+  #)

@@ -12,7 +12,7 @@ module.exports = (robot) ->
   github = require("githubot")(robot)
   orgName = process.env.HUBOT_GITHUB_ORG
   userName = 'kaekasui'
-  urlApiBase = "https://api.github.com"
+  urlApiBase = "https://#{HUBOT_GITHUB_TOKEN}@api.github.com"
 
   productionRegex = /## 本番環境\n*- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
   stagingRegex = /## ステージング環境\n*- https?:\/\/[\w/:%#\$&\?\(\)~\.=\+\-]+/
